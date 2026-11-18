@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Fleet Driver Portal</title>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --card: #1e293b;
+      --border: #334155;
+      --text: #f8fafc;
+      --muted: #94a3b8;
+      --primary: #2563eb;
+      --green: #16a34a;
+      --amber: #d97706;
+      --red: #dc2626;
+      --purple: #7c3aed;
+      --slate: #475569;
+    }
+    * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+    body { margin: 0; background: var(--bg); color: var(--text); padding: 14px; max-width: 480px; margin-inline: auto; }
+    h1 { font-size: 1.25rem; margin: 0 0 12px; display: flex; justify-content: space-between; align-items: center; }
+    .badge { font-size: 0.75rem; background: #0284c7; padding: 4px 8px; border-radius: 999px; }
+    .card { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 14px; margin-bottom: 14px; }
+    .card-title { font-size: 0.9rem; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 10px; }
+    .row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    label { display: block; font-size: 0.8rem; color: var(--muted); margin-bottom: 4px; }
+    input, select {
+      width: 100%; padding: 11px; border-radius: 10px; border: 1px solid var(--border);
+      background: #0f172a; color: var(--text); font-size: 1rem; margin-bottom: 10px;
+    }
+    button {
+      width: 100%; padding: 13px; border: none; border-radius: 10px; font-size: 0.95rem;
+      font-weight: 700; color: #fff; cursor: pointer; transition: opacity 0.15s;
+    }
+    button:active { opacity: 0.8; }
+    button:disabled { opacity: 0.5; cursor: not-allowed; }
+    .btn-primary { background: var(--primary); }
+    .btn-green { background: var(--green); }
+    .btn-amber { background: var(--amber); }
+    .btn-red { background: var(--red); }
+    .btn-purple { background: var(--purple); }
+    .btn-slate { background: var(--slate); }
+    .status-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 6px; }
+    .status-grid button { padding: 12px 8px; font-size: 0.85rem; }
+    #toast {
+      position: fixed; bottom: 18px; left: 50%; transform: translateX(-50%);
+      background: #16a34a; color: #fff; padding: 10px 18px; border-radius: 999px;
+      font-weight: 600; font-size: 0.9rem; display: none; box-shadow: 0 8px 20px rgba(0,0,0,0.4); z-index: 99;
+    }
+    .gps-info { font-size: 0.8rem; color: var(--muted); margin-top: 8px; text-align: center; }
+  </style>
+</head>
+<body>
+
+  <h1>
+    <span>?? Driver Console</span>
+    <span class="badge" id="activeBadge">TRK-01</span>
+  </h1>
+
+  <!-- 1. Driver & Vehicle Setup -->
+  <div class="card">
+    <div class="card-title">1. Vehicle & Driver</div>
+    <div class="row">
+      <div>
+        <label for="vehicleId">Vehicle ID</label>
+        <select id="vehicleId" onchange="saveProfile()">
+          <option value="TRK-01">TRK-01</option>
+          <option value="TRK-02">TRK-02</option>
+          <option value="TRK-03">TRK-03</option>
+          <option value="TRK-04">TRK-04</option>
+          <option value="TRK-05">TRK-05</option>
+        </select>
+      </div>
+      <div>
+        <label for="driverName">Driver Name</label>
+        <input type="text" id="driverName" placeholder="e.g. Ahmed Ali" oninput="saveProfile()" />
+      </div>
+    </div>
+  </div>
+
+  <!-- 2. Live GPS Check-In -->
+  <div class="card">
+    <div class="card-title">2. Live GPS Location</div>
+    <button class="btn-primary" id="gpsBtn" onclick="sendGPS()">?? Send Live GPS Now</button>
+    <div class="gps-info" id="gpsStatus">Tap above to send current coordinates & speed</div>
+  </div>
+
+  <!-- 3. Activity & Rest Status -->
+  <div class="card">
+    <div class="card-title">3. Activity / Rest Status</div>
+    <input type="text" id="activityNotes" placeholder="Optional note (e.g. Mandatory break, Port gate)..." />
+    <div class="status-grid">
+      <button class="btn-green" onclick="sendActivity('Driving')">?? Driving</button>
+      <button class="btn-amber" onclick="sendActivity('Resting')">? Resting</button>
+      <button class="btn-primary" onclick="sendActivity('Loading / Unloading')">?? Loading / Unloading</button>
+      <button class="btn-purple" onclick="sendActivity('Refueling')">? Refueling</button>
+      <button class="btn-red" onclick="sendActivity('Maintenance / Breakdown')">?? Maintenance</button>
+      <button class="btn-slate" onclick="sendActivity('Off Duty')">?? Off Duty</button>
+    </div>
+  </div>
+
+  <!-- 4. Fuel Refill Log -->
+  <div class="card">
+    <div class="card-title">4. Log Fuel Refill</div>
+    <div class="row">
+      <div>
+        <label for="odometer">Odometer (KM)</label>
+        <input type="number" id="odometer" placeholder="145650" inputmode="numeric" />
+      </div>
+      <div>
+        <label for="liters">Liters Added</label>
+        <input type="number" id="liters" placeholder="85" step="0.1" inputmode="decimal" />
+      </div>
+    </div>
+    <label for="costIqd">Total Cost (IQD)</label>
+    <input type="number" id="costIqd" placeholder="63750" inputmode="numeric" />
+    <button class="btn-green" id="fuelBtn" onclick="sendFuel()">? Submit Fuel Log</button>
+  </div>
+
+  <div id="toast">Sent!</div>
+
+  <script>
+    // PASTE YOUR GOOGLE APPS SCRIPT WEB APP URL BELOW:
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzBEGk_tVcQ3djSVTHisqbRwpy40kQ6acAZC9ph8Sb7NcShT78J0NuSYqG5mYubsnym_g/exec";
+
+    // Load saved driver profile on startup
+    window.onload = () => {
+      const savedVehicle = localStorage.getItem("fleet_vehicle") || "TRK-01";
+      const savedDriver = localStorage.getItem("fleet_driver") || "";
+      document.getElementById("vehicleId").value = savedVehicle;
+      document.getElementById("driverName").value = savedDriver;
+      document.getElementById("activeBadge").textContent = savedVehicle;
+    };
+
+    function saveProfile() {
+      const v = document.getElementById("vehicleId").value;
+      const d = document.getElementById("driverName").value;
+      localStorage.setItem("fleet_vehicle", v);
+      localStorage.setItem("fleet_driver", d);
+      document.getElementById("activeBadge").textContent = v;
+    }
+
+    function showToast(msg, isError = false) {
+      const t = document.getElementById("toast");
+      t.textContent = msg;
+      t.style.background = isError ? "#dc2626" : "#16a34a";
+      t.style.display = "block";
+      setTimeout(() => { t.style.display = "none"; }, 3000);
+    }
+
+    async function postPayload(payload) {
+      if (SCRIPT_URL.includes("YOUR_APPS_SCRIPT")) {
+        showToast("Please paste your Web App URL in index.html!", true);
+        return false;
+      }
+      try {
+        await fetch(SCRIPT_URL, {
+          method: "POST",
+          mode: "no-cors",
+          headers: { "Content-Type": "text/plain" },
+          body: JSON.stringify(payload)
+        });
+        return true;
+      } catch (err) {
+        showToast("Network error: " + err.message, true);
+        return false;
+      }
+    }
+
+    // 1. Send Live GPS
+    function sendGPS() {
+      const btn = document.getElementById("gpsBtn");
+      const status = document.getElementById("gpsStatus");
+      const vehicle_id = document.getElementById("vehicleId").value;
+
+      if (!navigator.geolocation) {
+        showToast("GPS not supported on this browser", true);
+        return;
+      }
+
+      btn.disabled = true;
+      btn.textContent = "? Acquiring Satellite GPS...";
+
+      navigator.geolocation.getCurrentPosition(async (pos) => {
+        const lat = Number(pos.coords.latitude.toFixed(6));
+        const lon = Number(pos.coords.longitude.toFixed(6));
+        // Convert m/s to km/h if speed is available
+        const speedKmh = pos.coords.speed ? Math.round(pos.coords.speed * 3.6) : 0;
+
+        const ok = await postPayload({
+          action: "gps",
+          vehicle_id,
+          latitude: lat,
+          longitude: lon,
+          speed: speedKmh
+        });
+
+        btn.disabled = false;
+        btn.textContent = "?? Send Live GPS Now";
+        if (ok) {
+          status.textContent = `Last sent: ${lat}, ${lon} (${speedKmh} km/h)`;
+          showToast("? GPS Location Logged!");
+        }
+      }, (err) => {
+        btn.disabled = false;
+        btn.textContent = "?? Send Live GPS Now";
+        showToast("GPS Permission Denied or Unavailable", true);
+      }, { enableHighAccuracy: true, timeout: 10000 });
+    }
+
+    // 2. Send Activity / Rest Status
+    async function sendActivity(status) {
+      const vehicle_id = document.getElementById("vehicleId").value;
+      const driver_name = document.getElementById("driverName").value.trim() || "Unknown Driver";
+      const notes = document.getElementById("activityNotes").value.trim();
+
+      const ok = await postPayload({
+        action: "activity",
+        vehicle_id,
+        driver_name,
+        status,
+        notes
+      });
+
+      if (ok) {
+        document.getElementById("activityNotes").value = "";
+        showToast(`? Status set to: ${status}`);
+      }
+    }
+
+    // 3. Send Fuel Refill Log
+    async function sendFuel() {
+      const vehicle_id = document.getElementById("vehicleId").value;
+      const driver_name = document.getElementById("driverName").value.trim() || "Unknown Driver";
+      const odometer = Number(document.getElementById("odometer").value);
+      const liters = Number(document.getElementById("liters").value);
+      const cost_iqd = Number(document.getElementById("costIqd").value);
+
+      if (!odometer || !liters || !cost_iqd) {
+        showToast("Please fill in Odometer, Liters, and Cost", true);
+        return;
+      }
+
+      const btn = document.getElementById("fuelBtn");
+      btn.disabled = true;
+      btn.textContent = "? Sending Fuel Log...";
+
+      const ok = await postPayload({
+        action: "fuel",
+        vehicle_id,
+        driver_name,
+        odometer,
+        liters,
+        cost_iqd
+      });
+
+      btn.disabled = false;
+      btn.textContent = "? Submit Fuel Log";
+
+      if (ok) {
+        document.getElementById("odometer").value = "";
+        document.getElementById("liters").value = "";
+        document.getElementById("costIqd").value = "";
+        showToast("? Fuel Refill Logged!");
+      }
+    }
+  </script>
+</body>
+</html>
