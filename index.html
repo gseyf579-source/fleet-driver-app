@@ -181,7 +181,7 @@
       }
 
       btn.disabled = true;
-      btn.textContent = "? Acquiring Satellite GPS...";
+      btn.textContent = "✅. Acquiring Satellite GPS...";
 
       navigator.geolocation.getCurrentPosition(async (pos) => {
         const lat = Number(pos.coords.latitude.toFixed(6));
@@ -198,14 +198,14 @@
         });
 
         btn.disabled = false;
-        btn.textContent = "?? Send Live GPS Now";
+        btn.textContent = "📍 Send Live GPS Now";
         if (ok) {
           status.textContent = `Last sent: ${lat}, ${lon} (${speedKmh} km/h)`;
-          showToast("? GPS Location Logged!");
+          showToast("✅ GPS Location Logged!");
         }
       }, (err) => {
         btn.disabled = false;
-        btn.textContent = "?? Send Live GPS Now";
+        btn.textContent = "📍 Send Live GPS Now";
         showToast("GPS Permission Denied or Unavailable", true);
       }, { enableHighAccuracy: true, timeout: 10000 });
     }
@@ -245,7 +245,7 @@
 
       const btn = document.getElementById("fuelBtn");
       btn.disabled = true;
-      btn.textContent = "? Sending Fuel Log...";
+      btn.textContent = "✅. Sending Fuel Log...";
 
       const ok = await postPayload({
         action: "fuel",
@@ -257,13 +257,13 @@
       });
 
       btn.disabled = false;
-      btn.textContent = "? Submit Fuel Log";
+      btn.textContent = "✅. Submit Fuel Log";
 
       if (ok) {
         document.getElementById("odometer").value = "";
         document.getElementById("liters").value = "";
         document.getElementById("costIqd").value = "";
-        showToast("? Fuel Refill Logged!");
+        showToast("✅. Fuel Refill Logged!");
       }
     }
   </script>
