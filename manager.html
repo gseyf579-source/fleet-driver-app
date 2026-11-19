@@ -174,7 +174,7 @@
 
       let totalLiters = 0;
       fuelLogs.forEach(f => {
-        const liters = parseFloat(f.Liters || f.Fuel_Amount || f.Quantity || 0);
+        const liters = parseFloat(f.Liters_Added || f.Liters || f.Fuel_Amount || f.Quantity || 0);
         if (!isNaN(liters)) totalLiters += liters;
       });
       document.getElementById('statFuel').innerText = totalLiters.toFixed(1) + " L";
