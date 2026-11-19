@@ -157,10 +157,7 @@
   }
 
   async function loadFleetData() {
-    if (SCRIPT_URL === "https://script.google.com/macros/s/AKfycbzBEGk_tVcQ3djSVTHisqbRwpy40kQ6acAZC9ph8Sb7NcShT78J0NuSYqG5mYubsnym_g/exec") {
-      document.getElementById('lastUpdated').innerText = "Please insert your Apps Script URL in manager.html";
-      return;
-    }
+    
 
     try {
       document.getElementById('lastUpdated').innerText = "Syncing...";
