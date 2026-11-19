@@ -2,8 +2,19 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Fleet Manager Live Console</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Fleet Manager Live Dashboard</title>
+
+  <!-- Installable Mobile Web App (PWA) Tags -->
+  <meta name="application-name" content="Fleet Manager" />
+  <meta name="apple-mobile-web-app-title" content="Fleet Manager" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="theme-color" content="#0f172a" />
+  <link rel="manifest" href='data:application/manifest+json,{"name":"Fleet Manager Live Dashboard","short_name":"Fleet Manager","start_url":"https://gseyf579-source.github.io/fleet-driver-app/manager.html","scope":"https://gseyf579-source.github.io/fleet-driver-app/","display":"standalone","background_color":"#0f172a","theme_color":"#0f172a","icons":[{"src":"https://cdn-icons-png.flaticon.com/512/2554/2554978.png","sizes":"512x512","type":"image/png"}]}' />
+  <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/2554/2554978.png" />
+
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
   <style>
     :root {
@@ -12,109 +23,147 @@
       --border: #334155;
       --text: #f8fafc;
       --muted: #94a3b8;
-      --primary: #3b82f6;
-      --green: #10b981;
+      --accent: #3b82f6;
+      --accent-hover: #2563eb;
+      --green: #22c55e;
       --amber: #f59e0b;
     }
-    * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, -apple-system, sans-serif; }
-    body { background: var(--bg); color: var(--text); padding: 16px; }
-    header {
-      display: flex; justify-content: space-between; align-items: center;
-      flex-wrap: wrap; gap: 12px; margin-bottom: 16px;
-      padding-bottom: 12px; border-bottom: 1px solid var(--border);
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      padding: 16px;
+      max-width: 960px;
+      margin: 0 auto;
     }
-    h1 { font-size: 1.35rem; font-weight: 700; }
-    .controls { display: flex; gap: 10px; align-items: center; }
+    header { margin-bottom: 16px; }
+    h1 { font-size: 1.45rem; font-weight: 700; margin-bottom: 4px; }
+    #statusText { font-size: 0.85rem; color: var(--muted); margin-bottom: 12px; }
+    .btn-row { display: flex; gap: 10px; flex-wrap: wrap; }
     button {
-      background: var(--primary); color: white; border: none;
-      padding: 8px 14px; border-radius: 8px; cursor: pointer; font-weight: 600;
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      padding: 10px 16px;
+      border-radius: 8px;
+      font-weight: 600;
+      font-size: 0.9rem;
+      cursor: pointer;
     }
-    button:hover { opacity: 0.9; }
-    .stats {
-      display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-      gap: 12px; margin-bottom: 16px;
+    button:hover { background: var(--accent-hover); }
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+      margin: 16px 0;
     }
-    .stat-card {
-      background: var(--card); border: 1px solid var(--border);
-      padding: 14px; border-radius: 10px;
+    @media (min-width: 700px) {
+      .kpi-grid { grid-template-columns: repeat(4, 1fr); }
     }
-    .stat-label { color: var(--muted); font-size: 0.8rem; text-transform: uppercase; }
-    .stat-val { font-size: 1.5rem; font-weight: 700; margin-top: 4px; }
-    .grid-main {
-      display: grid; grid-template-columns: 1.6fr 1fr; gap: 16px;
+    .kpi-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 14px;
     }
-    @media (max-width: 900px) { .grid-main { grid-template-columns: 1fr; } }
+    .kpi-label {
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--muted);
+      margin-bottom: 6px;
+    }
+    .kpi-value { font-size: 1.65rem; font-weight: 700; }
     .panel {
-      background: var(--card); border: 1px solid var(--border);
-      border-radius: 10px; overflow: hidden; display: flex; flex-direction: column;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+      margin-bottom: 16px;
     }
     .panel-header {
-      padding: 12px 16px; font-weight: 600; border-bottom: 1px solid var(--border);
-      display: flex; justify-content: space-between; align-items: center;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--border);
     }
-    #map { height: 420px; width: 100%; z-index: 1; }
-    .table-wrap { overflow-x: auto; max-height: 420px; }
+    .panel-title { font-weight: 600; font-size: 0.95rem; }
+    .panel-sub { font-size: 0.78rem; color: var(--muted); }
+    #map { height: 340px; width: 100%; z-index: 1; }
+    .table-wrap { overflow-x: auto; }
     table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
-    th, td { padding: 10px 12px; text-align: left; border-bottom: 1px solid var(--border); }
-    th { color: var(--muted); font-weight: 600; position: sticky; top: 0; background: var(--card); }
-    .badge {
-      padding: 3px 8px; border-radius: 999px; font-size: 0.75rem; font-weight: 600;
+    th, td {
+      text-align: left;
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--border);
     }
-    .badge-active { background: rgba(16, 185, 129, 0.2); color: var(--green); }
-    .badge-rest { background: rgba(245, 158, 11, 0.2); color: var(--amber); }
+    th {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      color: var(--muted);
+      background: rgba(15, 23, 42, 0.45);
+    }
+    .badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 999px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      background: rgba(34, 197, 94, 0.15);
+      color: var(--green);
+    }
   </style>
 </head>
 <body>
-
-<header>
-  <div>
+  <header>
     <h1>Fleet Manager Live Dashboard</h1>
-    <small id="lastUpdated" style="color: var(--muted);">Connecting to Google Sheets...</small>
-  </div>
-  <div class="controls">
-    <button onclick="loadFleetData()">Refresh Now</button>
-  </div>
-</header>
+    <div id="statusText">Loading fleet data...</div>
+    <div class="btn-row">
+      <button id="refreshBtn" onclick="loadDashboard()">Refresh Now</button>
+    </div>
+  </header>
 
-<div class="stats">
-  <div class="stat-card">
-    <div class="stat-label">Tracked Vehicles</div>
-    <div class="stat-val" id="statVehicles">0</div>
+  <div class="kpi-grid">
+    <div class="kpi-card">
+      <div class="kpi-label">Tracked Vehicles</div>
+      <div class="kpi-value" id="statVehicles">0</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">GPS Pings Logged</div>
+      <div class="kpi-value" id="statPings">0</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">Total Fuel (Liters)</div>
+      <div class="kpi-value" id="statFuel">0.0 L</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">Activity / Rest Logs</div>
+      <div class="kpi-value" id="statActivity">0</div>
+    </div>
   </div>
-  <div class="stat-card">
-    <div class="stat-label">GPS Pings Logged</div>
-    <div class="stat-val" id="statPings">0</div>
-  </div>
-  <div class="stat-card">
-    <div class="stat-label">Total Fuel (Liters)</div>
-    <div class="stat-val" id="statFuel">0 L</div>
-  </div>
-  <div class="stat-card">
-    <div class="stat-label">Activity / Rest Logs</div>
-    <div class="stat-val" id="statActivity">0</div>
-  </div>
-</div>
 
-<div class="grid-main">
   <div class="panel">
     <div class="panel-header">
-      <span>Live Vehicle Map</span>
-      <span style="font-size:0.75rem; color:var(--muted);">Click pin for driver details</span>
+      <span class="panel-title">Live Vehicle Map</span>
+      <span class="panel-sub">Click pin for driver details</span>
     </div>
     <div id="map"></div>
   </div>
 
   <div class="panel">
     <div class="panel-header">
-      <span>Latest Vehicle Status</span>
+      <span class="panel-title">Fleet Status & Latest Logs</span>
+      <span class="panel-sub">Auto-updates every 30s</span>
     </div>
     <div class="table-wrap">
       <table>
         <thead>
           <tr>
-            <th>Vehicle</th>
+            <th>Vehicle ID</th>
             <th>Driver</th>
-            <th>Status / Coords</th>
+            <th>Status</th>
             <th>Last Update</th>
           </tr>
         </thead>
@@ -124,138 +173,145 @@
       </table>
     </div>
   </div>
-</div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
-<script>
-  // PASTE YOUR GOOGLE APPS SCRIPT WEB APP URL BELOW:
-  const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzBEGk_tVcQ3djSVTHisqbRwpy40kQ6acAZC9ph8Sb7NcShT78J0NuSYqG5mYubsnym_g/exec";
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+  <script>
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzBEGk_tVcQ3djSVTHisqbRwpy40kQ6acAZC9ph8Sb7NcShT78J0NuSYqG5mYubsnym_g/exec";
 
-  // Initialize map centered on Baghdad
-  const map = L.map('map').setView([33.3152, 44.3661], 11);
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    attribution: '&copy; OpenStreetMap contributors'
-  }).addTo(map);
+    // Initialize map centered on Baghdad
+    const map = L.map('map').setView([33.3152, 44.3661], 11);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; OpenStreetMap contributors'
+    }).addTo(map);
 
-  let markersLayer = L.layerGroup().addTo(map);
+    let markersLayer = L.layerGroup().addTo(map);
 
-  function extractLatLng(row) {
-    // Supports separate Latitude/Longitude columns OR combined "lat, lng" string
-    let lat = parseFloat(row.Latitude || row.Lat || row.latitude);
-    let lng = parseFloat(row.Longitude || row.Lng || row.Lon || row.longitude);
-    if (!isNaN(lat) && !isNaN(lng)) return [lat, lng];
+    function extractLatLng(row) {
+      let lat = parseFloat(row.Latitude || row.Lat || row.latitude);
+      let lng = parseFloat(row.Longitude || row.Lng || row.Lon || row.longitude);
+      if (!isNaN(lat) && !isNaN(lng)) return [lat, lng];
 
-    for (let key in row) {
-      if (typeof row[key] === 'string' && row[key].includes(',')) {
-        const parts = row[key].split(',').map(Number);
-        if (parts.length === 2 && !isNaN(parts[0]) && !isNaN(parts[1])) {
-          return parts;
+      for (let key in row) {
+        if (typeof row[key] === 'string' && row[key].includes(',')) {
+          const parts = row[key].split(',').map(s => parseFloat(s.trim()));
+          if (parts.length === 2 && !isNaN(parts[0]) && !isNaN(parts[1])) {
+            return parts;
+          }
         }
       }
+      return null;
     }
-    return null;
-  }
 
-  async function loadFleetData() {
-    
+    function formatTime(ts) {
+      if (!ts) return "-";
+      const d = new Date(ts);
+      return isNaN(d.getTime()) ? String(ts) : d.toLocaleString();
+    }
 
-    try {
-      document.getElementById('lastUpdated').innerText = "Syncing...";
-      const res = await fetch(SCRIPT_URL);
-      const data = await res.json();
+    async function loadDashboard() {
+      const statusEl = document.getElementById('statusText');
+      statusEl.innerText = "Syncing...";
 
-      const gpsLogs = data.gps || [];
-      const fuelLogs = data.fuel || [];
-      const activityLogs = data.activity || [];
+      try {
+        const res = await fetch(SCRIPT_URL);
+        const data = await res.json();
 
-      // Update Top KPI Cards
-      document.getElementById('statPings').innerText = gpsLogs.length;
-      document.getElementById('statActivity').innerText = activityLogs.length;
+        const gpsLogs = data.gps || [];
+        const fuelLogs = data.fuel || [];
+        const vehiclesList = data.vehicles || [];
+        const activityLogs = data.activity || [];
 
-      let totalLiters = 0;
-      fuelLogs.forEach(f => {
-        const liters = parseFloat(f.Liters_Added || f.Liters || f.Fuel_Amount || f.Quantity || 0);
-        if (!isNaN(liters)) totalLiters += liters;
-      });
-      document.getElementById('statFuel').innerText = totalLiters.toFixed(1) + " L";
+        // Update Top KPI Cards
+        document.getElementById('statPings').innerText = gpsLogs.length;
+        document.getElementById('statActivity').innerText = activityLogs.length;
 
-      // Group latest GPS position by Vehicle ID
-      const latestByVehicle = {};
-      gpsLogs.forEach(row => {
-        const vId = row.Vehicle_ID || row.Vehicle || row.Truck || "Unknown";
-        latestByVehicle[vId] = row;
-      });
+        let totalLiters = 0;
+        fuelLogs.forEach(f => {
+          const liters = parseFloat(f.Liters_Added || f.Liters || f.Fuel_Amount || f.Quantity || 0);
+          if (!isNaN(liters)) totalLiters += liters;
+        });
+        document.getElementById('statFuel').innerText = totalLiters.toFixed(1) + " L";
 
-      // Merge latest activity/rest status if available
-      const latestStatusByVehicle = {};
-      activityLogs.forEach(row => {
-        const vId = row.Vehicle_ID || row.Vehicle || "Unknown";
-        latestStatusByVehicle[vId] = row.Status || row.Activity || "Active";
-      });
+        // Group latest GPS position by Vehicle ID
+        const latestByVehicle = {};
+        gpsLogs.forEach(row => {
+          const vId = row.Vehicle_ID || row.Vehicle || row.Truck || "Unknown";
+          latestByVehicle[vId] = row;
+        });
 
-      const vehicleKeys = Object.keys(latestByVehicle);
-      document.getElementById('statVehicles').innerText = vehicleKeys.length;
+        // Merge latest activity/rest status
+        const latestActivityByVehicle = {};
+        activityLogs.forEach(act => {
+          const vId = act.Vehicle_ID || act.Vehicle || act.Truck;
+          if (vId) latestActivityByVehicle[vId] = act;
+        });
 
-      // Clear old markers & table
-      markersLayer.clearLayers();
-      const tbody = document.getElementById('fleetTableBody');
-      tbody.innerHTML = "";
+        // Count unique vehicles from Vehicles sheet + GPS logs
+        const allVehicleIds = new Set([
+          ...vehiclesList.map(v => v.Vehicle_ID).filter(Boolean),
+          ...Object.keys(latestByVehicle)
+        ]);
+        document.getElementById('statVehicles').innerText = allVehicleIds.size;
 
-      if (vehicleKeys.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="4" style="color:var(--muted);">No GPS logs found yet.</td></tr>`;
-      }
+        // Update Map Markers & Table
+        markersLayer.clearLayers();
+        const tbody = document.getElementById('fleetTableBody');
+        tbody.innerHTML = "";
 
-      const bounds = [];
+        const bounds = [];
 
-      vehicleKeys.forEach(vId => {
-        const row = latestByVehicle[vId];
-        const driver = row.Driver_Name || row.Driver || "—";
-        const time = row.Timestamp || row.Date || "—";
-        const status = latestStatusByVehicle[vId] || row.Status || "Active";
-        const coords = extractLatLng(row);
+        if (allVehicleIds.size === 0) {
+          tbody.innerHTML = '<tr><td colspan="4" style="color:var(--muted);">No vehicle records found yet.</td></tr>';
+        } else {
+          allVehicleIds.forEach(vId => {
+            const gps = latestByVehicle[vId] || {};
+            const act = latestActivityByVehicle[vId] || {};
+            const veh = vehiclesList.find(v => v.Vehicle_ID === vId) || {};
 
-        const isRest = status.toLowerCase().includes("rest");
-        const badgeClass = isRest ? "badge-rest" : "badge-active";
+            const driver = act.Driver_Name || gps.Driver_Name || veh.Driver_Name || "Assigned Driver";
+            const status = act.Status || veh.Status || "Active";
+            const lastTime = formatTime(gps.Timestamp || act.Timestamp);
+            const speed = gps.Speed !== undefined ? `${gps.Speed} km/h` : "-";
 
-        // Add row to table
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-          <td><strong>${vId}</strong></td>
-          <td>${driver}</td>
-          <td>
-            <span class="badge ${badgeClass}">${status}</span><br/>
-            <small style="color:var(--muted);">${coords ? coords[0].toFixed(4) + ", " + coords[1].toFixed(4) : "No GPS"}</small>
-          </td>
-          <td><small>${time}</small></td>
-        `;
-        tbody.appendChild(tr);
+            // Table Row
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+              <td><strong>${vId}</strong>${veh.Plate_Number ? `<br><small style="color:var(--muted)">${veh.Plate_Number}</small>` : ""}</td>
+              <td>${driver}</td>
+              <td><span class="badge">${status}</span></td>
+              <td>${lastTime}</td>
+            `;
+            tbody.appendChild(tr);
 
-        // Plot pin on map
-        if (coords) {
-          bounds.push(coords);
-          const marker = L.marker(coords).bindPopup(`
-            <b>${vId}</b><br/>
-            Driver: ${driver}<br/>
-            Status: ${status}<br/>
-            Time: ${time}
-          `);
-          markersLayer.addLayer(marker);
+            // Map Pin
+            const coords = extractLatLng(gps);
+            if (coords) {
+              bounds.push(coords);
+              const marker = L.marker(coords).addTo(markersLayer);
+              marker.bindPopup(`
+                <strong>${vId}</strong> ${veh.Plate_Number ? `(${veh.Plate_Number})` : ""}<br>
+                <b>Driver:</b> ${driver}<br>
+                <b>Status:</b> ${status}<br>
+                <b>Speed:</b> ${speed}<br>
+                <b>Updated:</b> ${lastTime}
+              `);
+            }
+          });
         }
-      });
 
-      if (bounds.length > 0) {
-        map.fitBounds(bounds, { padding: [40, 40], maxZoom: 14 });
+        if (bounds.length > 0) {
+          map.fitBounds(bounds, { padding: [40, 40], maxZoom: 14 });
+        }
+
+        statusEl.innerText = "Last synced: " + new Date().toLocaleTimeString();
+      } catch (err) {
+        console.error(err);
+        statusEl.innerText = "Error loading data. Check Apps Script deployment.";
       }
-
-      document.getElementById('lastUpdated').innerText = "Last synced: " + new Date().toLocaleTimeString();
-    } catch (err) {
-      console.error(err);
-      document.getElementById('lastUpdated').innerText = "Error loading data. Check Apps Script deployment.";
     }
-  }
 
-  loadFleetData();
-  setInterval(loadFleetData, 30000); // Auto-refresh every 30 seconds
-</script>
+    loadDashboard();
+    setInterval(loadDashboard, 30000);
+  </script>
 </body>
 </html>
