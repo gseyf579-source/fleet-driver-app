@@ -4,6 +4,18 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>Fleet Driver Portal</title>
+
+  <!-- Installable Mobile Web App (PWA) Tags -->
+  <meta name="application-name" content="Fleet Driver" />
+  <meta name="apple-mobile-web-app-title" content="Fleet Driver" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="theme-color" content="#0f172a" />
+  <link rel="icon" type="image/png" href="https://gseyf579-source.github.io/fleet-driver-app/20261120_100413_0000.png" />
+  <link rel="apple-touch-icon" href="https://gseyf579-source.github.io/fleet-driver-app/20261120_100413_0000.png" />
+  <link rel="manifest" href='data:application/manifest+json,{"name":"Fleet Driver Portal","short_name":"Fleet Driver","start_url":"https://gseyf579-source.github.io/fleet-driver-app/index.html","scope":"https://gseyf579-source.github.io/fleet-driver-app/","display":"standalone","background_color":"#0f172a","theme_color":"#0f172a","icons":[{"src":"https://gseyf579-source.github.io/fleet-driver-app/20261120_100413_0000.png","sizes":"512x512","type":"image/png"}]}' />
+
   <style>
     :root {
       --bg: #0f172a;
@@ -55,7 +67,7 @@
 <body>
 
   <h1>
-    <span>🚛 Driver Console</span>
+    <span>Driver Console</span>
     <span class="badge" id="activeBadge">TRK-01</span>
   </h1>
 
@@ -83,7 +95,7 @@
   <!-- 2. Live GPS Check-In -->
   <div class="card">
     <div class="card-title">2. Live GPS Location</div>
-    <button class="btn-primary" id="gpsBtn" onclick="sendGPS()"> Send Live GPS Now</button>
+    <button class="btn-primary" id="gpsBtn" onclick="sendGPS()">Send Live GPS Now</button>
     <div class="gps-info" id="gpsStatus">Tap above to send current coordinates & speed</div>
   </div>
 
@@ -92,12 +104,12 @@
     <div class="card-title">3. Activity / Rest Status</div>
     <input type="text" id="activityNotes" placeholder="Optional note (e.g. Mandatory break, Port gate)..." />
     <div class="status-grid">
-      <button class="btn-green" onclick="sendActivity('Driving')">&#128666; Driving</button>
-      <button class="btn-amber" onclick="sendActivity('Resting')">&#9749; Resting</button>
-      <button class="btn-primary" onclick="sendActivity('Loading / Unloading')">&#128230; Loading / Unloading</button>
-      <button class="btn-purple" onclick="sendActivity('Refueling')">&#9981; Refueling</button>
-      <button class="btn-red" onclick="sendActivity('Maintenance / Breakdown')">&#128295; Maintenance</button>
-      <button class="btn-slate" onclick="sendActivity('Off Duty')">&#128721; Off Duty</button>
+      <button class="btn-green" onclick="sendActivity('Driving')">Driving</button>
+      <button class="btn-amber" onclick="sendActivity('Resting')">Resting</button>
+      <button class="btn-primary" onclick="sendActivity('Loading / Unloading')">Loading / Unloading</button>
+      <button class="btn-purple" onclick="sendActivity('Refueling')">Refueling</button>
+      <button class="btn-red" onclick="sendActivity('Maintenance / Breakdown')">Maintenance</button>
+      <button class="btn-slate" onclick="sendActivity('Off Duty')">Off Duty</button>
     </div>
   </div>
 
@@ -116,16 +128,14 @@
     </div>
     <label for="costIqd">Total Cost (IQD)</label>
     <input type="number" id="costIqd" placeholder="63750" inputmode="numeric" />
-    <button class="btn-green" id="fuelBtn" onclick="sendFuel()">⛽ Submit Fuel Log</button>
+    <button class="btn-green" id="fuelBtn" onclick="sendFuel()">Submit Fuel Log</button>
   </div>
 
   <div id="toast">Sent!</div>
 
   <script>
-    // PASTE YOUR GOOGLE APPS SCRIPT WEB APP URL BELOW:
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzBEGk_tVcQ3djSVTHisqbRwpy40kQ6acAZC9ph8Sb7NcShT78J0NuSYqG5mYubsnym_g/exec";
 
-    // Load saved driver profile on startup
     window.onload = () => {
       const savedVehicle = localStorage.getItem("fleet_vehicle") || "TRK-01";
       const savedDriver = localStorage.getItem("fleet_driver") || "";
@@ -174,6 +184,7 @@
       const btn = document.getElementById("gpsBtn");
       const status = document.getElementById("gpsStatus");
       const vehicle_id = document.getElementById("vehicleId").value;
+      const driver_name = document.getElementById("driverName").value.trim() || "Unknown Driver";
 
       if (!navigator.geolocation) {
         showToast("GPS not supported on this browser", true);
@@ -181,31 +192,31 @@
       }
 
       btn.disabled = true;
-      btn.textContent = "✅. Acquiring Satellite GPS...";
+      btn.textContent = "Acquiring Satellite GPS...";
 
       navigator.geolocation.getCurrentPosition(async (pos) => {
         const lat = Number(pos.coords.latitude.toFixed(6));
         const lon = Number(pos.coords.longitude.toFixed(6));
-        // Convert m/s to km/h if speed is available
         const speedKmh = pos.coords.speed ? Math.round(pos.coords.speed * 3.6) : 0;
 
         const ok = await postPayload({
           action: "gps",
           vehicle_id,
+          driver_name,
           latitude: lat,
           longitude: lon,
           speed: speedKmh
         });
 
         btn.disabled = false;
-        btn.textContent = "📍 Send Live GPS Now";
+        btn.textContent = "Send Live GPS Now";
         if (ok) {
           status.textContent = `Last sent: ${lat}, ${lon} (${speedKmh} km/h)`;
-          showToast("✅ GPS Location Logged!");
+          showToast("GPS Location Logged!");
         }
       }, (err) => {
         btn.disabled = false;
-        btn.textContent = "📍 Send Live GPS Now";
+        btn.textContent = "Send Live GPS Now";
         showToast("GPS Permission Denied or Unavailable", true);
       }, { enableHighAccuracy: true, timeout: 10000 });
     }
@@ -226,7 +237,7 @@
 
       if (ok) {
         document.getElementById("activityNotes").value = "";
-        showToast(`? Status set to: ${status}`);
+        showToast(`Status set to: ${status}`);
       }
     }
 
@@ -245,7 +256,7 @@
 
       const btn = document.getElementById("fuelBtn");
       btn.disabled = true;
-      btn.textContent = "✅. Sending Fuel Log...";
+      btn.textContent = "Sending Fuel Log...";
 
       const ok = await postPayload({
         action: "fuel",
@@ -257,13 +268,13 @@
       });
 
       btn.disabled = false;
-      btn.textContent = "✅. Submit Fuel Log";
+      btn.textContent = "Submit Fuel Log";
 
       if (ok) {
         document.getElementById("odometer").value = "";
         document.getElementById("liters").value = "";
         document.getElementById("costIqd").value = "";
-        showToast("✅. Fuel Refill Logged!");
+        showToast("Fuel Refill Logged!");
       }
     }
   </script>
