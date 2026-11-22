@@ -12,8 +12,9 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="theme-color" content="#0f172a" />
-  <link rel="manifest" href='data:application/manifest+json,{"name":"Fleet Manager Live Dashboard","short_name":"Fleet Manager","start_url":"https://gseyf579-source.github.io/fleet-driver-app/manager.html","scope":"https://gseyf579-source.github.io/fleet-driver-app/","display":"standalone","background_color":"#0f172a","theme_color":"#0f172a","icons":[{"src":"https://cdn-icons-png.flaticon.com/512/2554/2554978.png","sizes":"512x512","type":"image/png"}]}' />
-  <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/2554/2554978.png" />
+  <link rel="icon" type="image/png" href="https://gseyf579-source.github.io/fleet-driver-app/20261120_100413_0000.png" />
+  <link rel="apple-touch-icon" href="https://gseyf579-source.github.io/fleet-driver-app/20261120_100413_0000.png" />
+  <link rel="manifest" href='data:application/manifest+json,{"name":"Fleet Manager Live Dashboard","short_name":"Fleet Manager","start_url":"https://gseyf579-source.github.io/fleet-driver-app/manager.html","scope":"https://gseyf579-source.github.io/fleet-driver-app/","display":"standalone","background_color":"#0f172a","theme_color":"#0f172a","icons":[{"src":"https://gseyf579-source.github.io/fleet-driver-app/20261120_100413_0000.png","sizes":"512x512","type":"image/png"}]}' />
 
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
   <style>
@@ -226,9 +227,12 @@
         document.getElementById('statActivity').innerText = activityLogs.length;
 
         let totalLiters = 0;
+        const latestFuelByVehicle = {};
         fuelLogs.forEach(f => {
           const liters = parseFloat(f.Liters_Added || f.Liters || f.Fuel_Amount || f.Quantity || 0);
           if (!isNaN(liters)) totalLiters += liters;
+          const vId = f.Vehicle_ID || f.Vehicle || f.Truck;
+          if (vId) latestFuelByVehicle[vId] = f;
         });
         document.getElementById('statFuel').innerText = totalLiters.toFixed(1) + " L";
 
@@ -266,9 +270,10 @@
           allVehicleIds.forEach(vId => {
             const gps = latestByVehicle[vId] || {};
             const act = latestActivityByVehicle[vId] || {};
+            const fuel = latestFuelByVehicle[vId] || {};
             const veh = vehiclesList.find(v => v.Vehicle_ID === vId) || {};
 
-            const driver = act.Driver_Name || gps.Driver_Name || veh.Driver_Name || "Assigned Driver";
+            const driver = act.Driver_Name || gps.Driver_Name || fuel.Driver_Name || veh.Driver_Name || "Assigned Driver";
             const status = act.Status || veh.Status || "Active";
             const lastTime = formatTime(gps.Timestamp || act.Timestamp);
             const speed = gps.Speed !== undefined ? `${gps.Speed} km/h` : "-";
