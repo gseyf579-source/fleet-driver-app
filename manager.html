@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" dir="ltr">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
@@ -31,7 +31,7 @@
     }
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Tahoma, Roboto, sans-serif;
       background: var(--bg);
       color: var(--text);
       padding: 16px;
@@ -39,7 +39,8 @@
       margin: 0 auto;
     }
     header { margin-bottom: 16px; }
-    h1 { font-size: 1.45rem; font-weight: 700; margin-bottom: 4px; }
+    .top-bar { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-bottom: 4px; }
+    h1 { font-size: 1.4rem; font-weight: 700; }
     #statusText { font-size: 0.85rem; color: var(--muted); margin-bottom: 12px; }
     .btn-row { display: flex; gap: 10px; flex-wrap: wrap; }
     button {
@@ -53,6 +54,14 @@
       cursor: pointer;
     }
     button:hover { background: var(--accent-hover); }
+    .lang-btn {
+      background: var(--card);
+      border: 1px solid var(--border);
+      padding: 6px 12px;
+      border-radius: 999px;
+      font-size: 0.82rem;
+    }
+    .lang-btn:hover { background: var(--border); }
     .kpi-grid {
       display: grid;
       grid-template-columns: repeat(2, 1fr);
@@ -69,9 +78,9 @@
       padding: 14px;
     }
     .kpi-label {
-      font-size: 0.72rem;
+      font-size: 0.75rem;
       text-transform: uppercase;
-      letter-spacing: 0.05em;
+      letter-spacing: 0.04em;
       color: var(--muted);
       margin-bottom: 6px;
     }
@@ -96,7 +105,7 @@
     .table-wrap { overflow-x: auto; }
     table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
     th, td {
-      text-align: left;
+      text-align: start;
       padding: 10px 12px;
       border-bottom: 1px solid var(--border);
     }
@@ -108,7 +117,7 @@
     }
     .badge {
       display: inline-block;
-      padding: 2px 8px;
+      padding: 3px 9px;
       border-radius: 999px;
       font-size: 0.75rem;
       font-weight: 600;
@@ -119,7 +128,10 @@
 </head>
 <body>
   <header>
-    <h1>Fleet Manager Live Dashboard</h1>
+    <div class="top-bar">
+      <h1 id="dashTitle">Fleet Manager Live Dashboard</h1>
+      <button class="lang-btn" id="langBtn" onclick="toggleLang()">عربي</button>
+    </div>
     <div id="statusText">Loading fleet data...</div>
     <div class="btn-row">
       <button id="refreshBtn" onclick="loadDashboard()">Refresh Now</button>
@@ -128,44 +140,44 @@
 
   <div class="kpi-grid">
     <div class="kpi-card">
-      <div class="kpi-label">Tracked Vehicles</div>
+      <div class="kpi-label" id="lblStatVehicles">Tracked Vehicles</div>
       <div class="kpi-value" id="statVehicles">0</div>
     </div>
     <div class="kpi-card">
-      <div class="kpi-label">GPS Pings Logged</div>
+      <div class="kpi-label" id="lblStatPings">GPS Pings Logged</div>
       <div class="kpi-value" id="statPings">0</div>
     </div>
     <div class="kpi-card">
-      <div class="kpi-label">Total Fuel (Liters)</div>
+      <div class="kpi-label" id="lblStatFuel">Total Fuel (Liters)</div>
       <div class="kpi-value" id="statFuel">0.0 L</div>
     </div>
     <div class="kpi-card">
-      <div class="kpi-label">Activity / Rest Logs</div>
+      <div class="kpi-label" id="lblStatActivity">Activity / Rest Logs</div>
       <div class="kpi-value" id="statActivity">0</div>
     </div>
   </div>
 
   <div class="panel">
     <div class="panel-header">
-      <span class="panel-title">Live Vehicle Map</span>
-      <span class="panel-sub">Click pin for driver details</span>
+      <span class="panel-title" id="mapTitle">Live Vehicle Map</span>
+      <span class="panel-sub" id="mapSub">Click pin for driver details</span>
     </div>
     <div id="map"></div>
   </div>
 
   <div class="panel">
     <div class="panel-header">
-      <span class="panel-title">Fleet Status & Latest Logs</span>
-      <span class="panel-sub">Auto-updates every 30s</span>
+      <span class="panel-title" id="tblTitle">Fleet Status & Latest Logs</span>
+      <span class="panel-sub" id="tblSub">Auto-updates every 30s</span>
     </div>
     <div class="table-wrap">
       <table>
         <thead>
           <tr>
-            <th>Vehicle ID</th>
-            <th>Driver</th>
-            <th>Status</th>
-            <th>Last Update</th>
+            <th id="thVehicle">Vehicle ID</th>
+            <th id="thDriver">Driver</th>
+            <th id="thStatus">Status</th>
+            <th id="thUpdate">Last Update</th>
           </tr>
         </thead>
         <tbody id="fleetTableBody">
@@ -179,13 +191,120 @@
   <script>
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzBEGk_tVcQ3djSVTHisqbRwpy40kQ6acAZC9ph8Sb7NcShT78J0NuSYqG5mYubsnym_g/exec";
 
-    // Initialize map centered on Baghdad
+    const I18N = {
+      en: {
+        dir: "ltr",
+        langBtn: "عربي",
+        dashTitle: "Fleet Manager Live Dashboard",
+        refreshBtn: "Refresh Now",
+        syncing: "Syncing...",
+        lastSynced: (time) => `Last synced: ${time}`,
+        errLoad: "Error loading data. Check Apps Script deployment.",
+        lblStatVehicles: "Tracked Vehicles",
+        lblStatPings: "GPS Pings Logged",
+        lblStatFuel: "Total Fuel (Liters)",
+        lblStatActivity: "Activity / Rest Logs",
+        mapTitle: "Live Vehicle Map",
+        mapSub: "Click pin for driver details",
+        tblTitle: "Fleet Status & Latest Logs",
+        tblSub: "Auto-updates every 30s",
+        thVehicle: "Vehicle ID",
+        thDriver: "Driver",
+        thStatus: "Status",
+        thUpdate: "Last Update",
+        noRecords: "No vehicle records found yet.",
+        assignedDriver: "Assigned Driver",
+        popDriver: "Driver",
+        popStatus: "Status",
+        popSpeed: "Speed",
+        popUpdated: "Updated",
+        statuses: {
+          "Active": "Active",
+          "Driving": "Driving",
+          "Resting": "Resting",
+          "Loading / Unloading": "Loading / Unloading",
+          "Refueling": "Refueling",
+          "Maintenance / Breakdown": "Maintenance",
+          "Off Duty": "Off Duty"
+        }
+      },
+      ar: {
+        dir: "rtl",
+        langBtn: "English",
+        dashTitle: "لوحة متابعة الأسطول المباشرة",
+        refreshBtn: "تحديث الآن",
+        syncing: "جاري المزامنة...",
+        lastSynced: (time) => `آخر تحديث: ${time}`,
+        errLoad: "خطأ في تحميل البيانات. تحقق من رابط Apps Script.",
+        lblStatVehicles: "المركبات المتتبعة",
+        lblStatPings: "إحداثيات GPS المسجلة",
+        lblStatFuel: "إجمالي الوقود (لتر)",
+        lblStatActivity: "سجلات النشاط والاستراحة",
+        mapTitle: "الخريطة المباشرة للمركبات",
+        mapSub: "اضغط على العلامة لعرض تفاصيل السائق",
+        tblTitle: "حالة الأسطول وآخر السجلات",
+        tblSub: "تحديث تلقائي كل 30 ثانية",
+        thVehicle: "رقم المركبة",
+        thDriver: "السائق",
+        thStatus: "الحالة",
+        thUpdate: "آخر تحديث",
+        noRecords: "لا توجد سجلات مركبات حتى الآن.",
+        assignedDriver: "سائق معيّن",
+        popDriver: "السائق",
+        popStatus: "الحالة",
+        popSpeed: "السرعة",
+        popUpdated: "التحديث",
+        statuses: {
+          "Active": "نشط",
+          "Driving": "في الطريق (قيادة)",
+          "Resting": "استراحة",
+          "Loading / Unloading": "تحميل / تفريغ",
+          "Refueling": "تعبئة وقود",
+          "Maintenance / Breakdown": "صيانة / عطل",
+          "Off Duty": "خارج الخدمة"
+        }
+      }
+    };
+
+    let currentLang = localStorage.getItem("fleet_lang") || "en";
+    let cachedData = null;
+
     const map = L.map('map').setView([33.3152, 44.3661], 11);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution: '&copy; OpenStreetMap contributors'
     }).addTo(map);
 
     let markersLayer = L.layerGroup().addTo(map);
+
+    function applyLanguage() {
+      const t = I18N[currentLang];
+      document.documentElement.lang = currentLang;
+      document.documentElement.dir = t.dir;
+
+      document.getElementById("langBtn").textContent = t.langBtn;
+      document.getElementById("dashTitle").textContent = t.dashTitle;
+      document.getElementById("refreshBtn").textContent = t.refreshBtn;
+      document.getElementById("lblStatVehicles").textContent = t.lblStatVehicles;
+      document.getElementById("lblStatPings").textContent = t.lblStatPings;
+      document.getElementById("lblStatFuel").textContent = t.lblStatFuel;
+      document.getElementById("lblStatActivity").textContent = t.lblStatActivity;
+      document.getElementById("mapTitle").textContent = t.mapTitle;
+      document.getElementById("mapSub").textContent = t.mapSub;
+      document.getElementById("tblTitle").textContent = t.tblTitle;
+      document.getElementById("tblSub").textContent = t.tblSub;
+      document.getElementById("thVehicle").textContent = t.thVehicle;
+      document.getElementById("thDriver").textContent = t.thDriver;
+      document.getElementById("thStatus").textContent = t.thStatus;
+      document.getElementById("thUpdate").textContent = t.thUpdate;
+
+      if (cachedData) renderDashboard(cachedData);
+    }
+
+    function toggleLang() {
+      currentLang = currentLang === "en" ? "ar" : "en";
+      localStorage.setItem("fleet_lang", currentLang);
+      applyLanguage();
+    }
 
     function extractLatLng(row) {
       let lat = parseFloat(row.Latitude || row.Lat || row.latitude);
@@ -209,112 +328,113 @@
       return isNaN(d.getTime()) ? String(ts) : d.toLocaleString();
     }
 
-    async function loadDashboard() {
-      const statusEl = document.getElementById('statusText');
-      statusEl.innerText = "Syncing...";
+    function renderDashboard(data) {
+      const t = I18N[currentLang];
+      const gpsLogs = data.gps || [];
+      const fuelLogs = data.fuel || [];
+      const vehiclesList = data.vehicles || [];
+      const activityLogs = data.activity || [];
 
-      try {
-        const res = await fetch(SCRIPT_URL);
-        const data = await res.json();
+      document.getElementById('statPings').innerText = gpsLogs.length;
+      document.getElementById('statActivity').innerText = activityLogs.length;
 
-        const gpsLogs = data.gps || [];
-        const fuelLogs = data.fuel || [];
-        const vehiclesList = data.vehicles || [];
-        const activityLogs = data.activity || [];
+      let totalLiters = 0;
+      const latestFuelByVehicle = {};
+      fuelLogs.forEach(f => {
+        const liters = parseFloat(f.Liters_Added || f.Liters || f.Fuel_Amount || f.Quantity || 0);
+        if (!isNaN(liters)) totalLiters += liters;
+        const vId = f.Vehicle_ID || f.Vehicle || f.Truck;
+        if (vId) latestFuelByVehicle[vId] = f;
+      });
+      document.getElementById('statFuel').innerText = totalLiters.toFixed(1) + (currentLang === "ar" ? " لتر" : " L");
 
-        // Update Top KPI Cards
-        document.getElementById('statPings').innerText = gpsLogs.length;
-        document.getElementById('statActivity').innerText = activityLogs.length;
+      const latestByVehicle = {};
+      gpsLogs.forEach(row => {
+        const vId = row.Vehicle_ID || row.Vehicle || row.Truck || "Unknown";
+        latestByVehicle[vId] = row;
+      });
 
-        let totalLiters = 0;
-        const latestFuelByVehicle = {};
-        fuelLogs.forEach(f => {
-          const liters = parseFloat(f.Liters_Added || f.Liters || f.Fuel_Amount || f.Quantity || 0);
-          if (!isNaN(liters)) totalLiters += liters;
-          const vId = f.Vehicle_ID || f.Vehicle || f.Truck;
-          if (vId) latestFuelByVehicle[vId] = f;
-        });
-        document.getElementById('statFuel').innerText = totalLiters.toFixed(1) + " L";
+      const latestActivityByVehicle = {};
+      activityLogs.forEach(act => {
+        const vId = act.Vehicle_ID || act.Vehicle || act.Truck;
+        if (vId) latestActivityByVehicle[vId] = act;
+      });
 
-        // Group latest GPS position by Vehicle ID
-        const latestByVehicle = {};
-        gpsLogs.forEach(row => {
-          const vId = row.Vehicle_ID || row.Vehicle || row.Truck || "Unknown";
-          latestByVehicle[vId] = row;
-        });
+      const allVehicleIds = new Set([
+        ...vehiclesList.map(v => v.Vehicle_ID).filter(Boolean),
+        ...Object.keys(latestByVehicle)
+      ]);
+      document.getElementById('statVehicles').innerText = allVehicleIds.size;
 
-        // Merge latest activity/rest status
-        const latestActivityByVehicle = {};
-        activityLogs.forEach(act => {
-          const vId = act.Vehicle_ID || act.Vehicle || act.Truck;
-          if (vId) latestActivityByVehicle[vId] = act;
-        });
+      markersLayer.clearLayers();
+      const tbody = document.getElementById('fleetTableBody');
+      tbody.innerHTML = "";
+      const bounds = [];
 
-        // Count unique vehicles from Vehicles sheet + GPS logs
-        const allVehicleIds = new Set([
-          ...vehiclesList.map(v => v.Vehicle_ID).filter(Boolean),
-          ...Object.keys(latestByVehicle)
-        ]);
-        document.getElementById('statVehicles').innerText = allVehicleIds.size;
+      if (allVehicleIds.size === 0) {
+        tbody.innerHTML = `<tr><td colspan="4" style="color:var(--muted);">${t.noRecords}</td></tr>`;
+      } else {
+        allVehicleIds.forEach(vId => {
+          const gps = latestByVehicle[vId] || {};
+          const act = latestActivityByVehicle[vId] || {};
+          const fuel = latestFuelByVehicle[vId] || {};
+          const veh = vehiclesList.find(v => v.Vehicle_ID === vId) || {};
 
-        // Update Map Markers & Table
-        markersLayer.clearLayers();
-        const tbody = document.getElementById('fleetTableBody');
-        tbody.innerHTML = "";
+          const rawDriver = act.Driver_Name || gps.Driver_Name || fuel.Driver_Name || veh.Driver_Name;
+          const driver = (!rawDriver || rawDriver === "Unknown Driver") ? t.assignedDriver : rawDriver;
+          const rawStatus = act.Status || veh.Status || "Active";
+          const status = t.statuses[rawStatus] || rawStatus;
+          const lastTime = formatTime(gps.Timestamp || act.Timestamp);
+          const speed = gps.Speed !== undefined ? `${gps.Speed} ${currentLang === "ar" ? "كم/س" : "km/h"}` : "-";
 
-        const bounds = [];
+          const tr = document.createElement('tr');
+          tr.innerHTML = `
+            <td><strong>${vId}</strong>${veh.Plate_Number ? `<br><small style="color:var(--muted)">${veh.Plate_Number}</small>` : ""}</td>
+            <td>${driver}</td>
+            <td><span class="badge">${status}</span></td>
+            <td>${lastTime}</td>
+          `;
+          tbody.appendChild(tr);
 
-        if (allVehicleIds.size === 0) {
-          tbody.innerHTML = '<tr><td colspan="4" style="color:var(--muted);">No vehicle records found yet.</td></tr>';
-        } else {
-          allVehicleIds.forEach(vId => {
-            const gps = latestByVehicle[vId] || {};
-            const act = latestActivityByVehicle[vId] || {};
-            const fuel = latestFuelByVehicle[vId] || {};
-            const veh = vehiclesList.find(v => v.Vehicle_ID === vId) || {};
-
-            const driver = act.Driver_Name || gps.Driver_Name || fuel.Driver_Name || veh.Driver_Name || "Assigned Driver";
-            const status = act.Status || veh.Status || "Active";
-            const lastTime = formatTime(gps.Timestamp || act.Timestamp);
-            const speed = gps.Speed !== undefined ? `${gps.Speed} km/h` : "-";
-
-            // Table Row
-            const tr = document.createElement('tr');
-            tr.innerHTML = `
-              <td><strong>${vId}</strong>${veh.Plate_Number ? `<br><small style="color:var(--muted)">${veh.Plate_Number}</small>` : ""}</td>
-              <td>${driver}</td>
-              <td><span class="badge">${status}</span></td>
-              <td>${lastTime}</td>
-            `;
-            tbody.appendChild(tr);
-
-            // Map Pin
-            const coords = extractLatLng(gps);
-            if (coords) {
-              bounds.push(coords);
-              const marker = L.marker(coords).addTo(markersLayer);
-              marker.bindPopup(`
+          const coords = extractLatLng(gps);
+          if (coords) {
+            bounds.push(coords);
+            const marker = L.marker(coords).addTo(markersLayer);
+            marker.bindPopup(`
+              <div dir="${t.dir}" style="text-align:start;">
                 <strong>${vId}</strong> ${veh.Plate_Number ? `(${veh.Plate_Number})` : ""}<br>
-                <b>Driver:</b> ${driver}<br>
-                <b>Status:</b> ${status}<br>
-                <b>Speed:</b> ${speed}<br>
-                <b>Updated:</b> ${lastTime}
-              `);
-            }
-          });
-        }
+                <b>${t.popDriver}:</b> ${driver}<br>
+                <b>${t.popStatus}:</b> ${status}<br>
+                <b>${t.popSpeed}:</b> ${speed}<br>
+                <b>${t.popUpdated}:</b> ${lastTime}
+              </div>
+            `);
+          }
+        });
+      }
 
-        if (bounds.length > 0) {
-          map.fitBounds(bounds, { padding: [40, 40], maxZoom: 14 });
-        }
-
-        statusEl.innerText = "Last synced: " + new Date().toLocaleTimeString();
-      } catch (err) {
-        console.error(err);
-        statusEl.innerText = "Error loading data. Check Apps Script deployment.";
+      if (bounds.length > 0) {
+        map.fitBounds(bounds, { padding: [40, 40], maxZoom: 14 });
       }
     }
 
+    async function loadDashboard() {
+      const t = I18N[currentLang];
+      const statusEl = document.getElementById('statusText');
+      statusEl.innerText = t.syncing;
+
+      try {
+        const res = await fetch(SCRIPT_URL);
+        cachedData = await res.json();
+        renderDashboard(cachedData);
+        statusEl.innerText = I18N[currentLang].lastSynced(new Date().toLocaleTimeString());
+      } catch (err) {
+        console.error(err);
+        statusEl.innerText = I18N[currentLang].errLoad;
+      }
+    }
+
+    applyLanguage();
     loadDashboard();
     setInterval(loadDashboard, 30000);
   </script>
