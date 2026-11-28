@@ -14,7 +14,7 @@
   <meta name="theme-color" content="#0f172a" />
   <link rel="icon" type="image/png" href="https://gseyf579-source.github.io/fleet-driver-app/20261120_100413_0000.png" />
   <link rel="apple-touch-icon" href="https://gseyf579-source.github.io/fleet-driver-app/20261120_100413_0000.png" />
- <link rel="manifest" href="driver-manifest.json" />
+  <link rel="manifest" href="driver-manifest.json" />
 
   <style>
     :root {
@@ -68,14 +68,61 @@
       white-space: nowrap;
     }
     .gps-info { font-size: 0.8rem; color: var(--muted); margin-top: 8px; text-align: center; }
+
+    /* Driver PIN Lock Modal */
+    #driverLockModal {
+      position: fixed; inset: 0; background: #0f172a; z-index: 9999;
+      display: flex; align-items: center; justify-content: center; padding: 16px;
+    }
+    .lock-card {
+      width: 100%; max-width: 380px; background: var(--card); border: 1px solid var(--border);
+      border-radius: 16px; padding: 20px; box-shadow: 0 20px 40px rgba(0,0,0,0.45);
+    }
+    .lock-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
+    .lock-brand { display: flex; align-items: center; gap: 10px; }
+    .lock-brand img { width: 40px; height: 40px; border-radius: 10px; object-fit: cover; }
+    .lock-title { margin: 0 0 6px; font-size: 1.15rem; }
+    .lock-sub { margin: 0 0 14px; font-size: 0.85rem; color: var(--muted); }
+    .lock-err { margin-top: 10px; font-size: 0.85rem; color: #f87171; text-align: center; min-height: 18px; }
   </style>
 </head>
 <body>
+
+  <!-- Driver PIN Lock Overlay -->
+  <div id="driverLockModal">
+    <div class="lock-card" id="lockCard">
+      <div class="lock-top">
+        <div class="lock-brand">
+          <img src="https://gseyf579-source.github.io/fleet-driver-app/20261120_100413_0000.png" alt="Truck Icon" />
+          <strong id="lockBrandText">Driver Console</strong>
+        </div>
+        <button type="button" class="lang-btn" id="lockLangBtn" onclick="toggleLang()">عربي</button>
+      </div>
+      <h2 class="lock-title" id="lockHeading">Driver Login</h2>
+      <p class="lock-sub" id="lockSubtext">Select your Vehicle ID and enter your Driver PIN</p>
+
+      <label for="lockVehicleId" id="lockLblVehicle">Vehicle ID</label>
+      <select id="lockVehicleId">
+        <option value="TRK-01">TRK-01</option>
+        <option value="TRK-02">TRK-02</option>
+        <option value="TRK-03">TRK-03</option>
+        <option value="TRK-04">TRK-04</option>
+        <option value="TRK-05">TRK-05</option>
+      </select>
+
+      <label for="lockPinInput" id="lockLblPin">Driver PIN</label>
+      <input type="password" id="lockPinInput" inputmode="numeric" maxlength="10" placeholder="••••" />
+
+      <button type="button" class="action-btn btn-primary" id="lockUnlockBtn" onclick="unlockDriverApp()">Unlock</button>
+      <div class="lock-err" id="lockError"></div>
+    </div>
+  </div>
 
   <h1>
     <span id="appTitle">Driver Console</span>
     <div class="header-actions">
       <button class="lang-btn" id="langBtn" onclick="toggleLang()">عربي</button>
+      <button class="lang-btn" id="lockAppBtn" onclick="lockDriverApp()">Lock</button>
       <span class="badge" id="activeBadge">TRK-01</span>
     </div>
   </h1>
@@ -149,6 +196,14 @@
       en: {
         dir: "ltr",
         langBtn: "عربي",
+        lockBtn: "Lock",
+        lockHeading: "Driver Login",
+        lockSubtext: "Select your Vehicle ID and enter your Driver PIN",
+        lockLblPin: "Driver PIN",
+        lockUnlockBtn: "Unlock",
+        lockChecking: "Checking...",
+        lockMissingPin: "Please enter your Driver PIN",
+        lockInvalidPin: "Invalid Vehicle ID or Driver PIN",
         appTitle: "Driver Console",
         sec1Title: "1. Vehicle & Driver",
         lblVehicle: "Vehicle ID",
@@ -186,6 +241,14 @@
       ar: {
         dir: "rtl",
         langBtn: "English",
+        lockBtn: "قفل",
+        lockHeading: "دخول السائق",
+        lockSubtext: "اختر رقم المركبة وأدخل رمز PIN الخاص بالسائق",
+        lockLblPin: "رمز PIN للسائق",
+        lockUnlockBtn: "دخول",
+        lockChecking: "جاري التحقق...",
+        lockMissingPin: "يرجى إدخال رمز PIN",
+        lockInvalidPin: "رقم المركبة أو رمز PIN غير صحيح",
         appTitle: "واجهة السائق",
         sec1Title: "١. المركبة والسائق",
         lblVehicle: "رقم المركبة",
@@ -228,8 +291,18 @@
       const t = I18N[currentLang];
       document.documentElement.lang = currentLang;
       document.documentElement.dir = t.dir;
+      document.getElementById("lockCard").dir = t.dir;
 
       document.getElementById("langBtn").textContent = t.langBtn;
+      document.getElementById("lockLangBtn").textContent = t.langBtn;
+      document.getElementById("lockAppBtn").textContent = t.lockBtn;
+      document.getElementById("lockBrandText").textContent = t.appTitle;
+      document.getElementById("lockHeading").textContent = t.lockHeading;
+      document.getElementById("lockSubtext").textContent = t.lockSubtext;
+      document.getElementById("lockLblVehicle").textContent = t.lblVehicle;
+      document.getElementById("lockLblPin").textContent = t.lockLblPin;
+      document.getElementById("lockUnlockBtn").textContent = t.lockUnlockBtn;
+
       document.getElementById("appTitle").textContent = t.appTitle;
       document.getElementById("sec1Title").textContent = t.sec1Title;
       document.getElementById("lblVehicle").textContent = t.lblVehicle;
@@ -262,13 +335,73 @@
       applyLanguage();
     }
 
+    function getDriverPin() {
+      return localStorage.getItem("fleet_driver_pin") || "";
+    }
+
+    async function unlockDriverApp() {
+      const t = I18N[currentLang];
+      const vId = document.getElementById("lockVehicleId").value.trim().toUpperCase();
+      const pin = document.getElementById("lockPinInput").value.trim();
+      const errEl = document.getElementById("lockError");
+      const btn = document.getElementById("lockUnlockBtn");
+
+      errEl.textContent = "";
+      if (!pin) {
+        errEl.textContent = t.lockMissingPin;
+        return;
+      }
+
+      btn.disabled = true;
+      btn.textContent = t.lockChecking;
+
+      try {
+        // Apps Script Web App requires following redirect for JSON response
+        const res = await fetch(SCRIPT_URL, {
+          method: "POST",
+          headers: { "Content-Type": "text/plain;charset=utf-8" },
+          body: JSON.stringify({ action: "driver_login", vehicleId: vId, pin: pin })
+        });
+        const data = await res.json();
+
+        if (data && data.status === "ok") {
+          localStorage.setItem("fleet_vehicle", vId);
+          localStorage.setItem("fleet_driver_pin", pin);
+          document.getElementById("vehicleId").value = vId;
+          document.getElementById("activeBadge").textContent = vId;
+          document.getElementById("driverLockModal").style.display = "none";
+        } else {
+          errEl.textContent = t.lockInvalidPin;
+        }
+      } catch (err) {
+        errEl.textContent = t.toastNetErr + err.message;
+      } finally {
+        btn.disabled = false;
+        btn.textContent = t.lockUnlockBtn;
+      }
+    }
+
+    function lockDriverApp() {
+      localStorage.removeItem("fleet_driver_pin");
+      document.getElementById("lockPinInput").value = "";
+      document.getElementById("lockVehicleId").value = document.getElementById("vehicleId").value;
+      document.getElementById("driverLockModal").style.display = "flex";
+    }
+
     window.onload = () => {
       const savedVehicle = localStorage.getItem("fleet_vehicle") || "TRK-01";
       const savedDriver = localStorage.getItem("fleet_driver") || "";
+      const savedPin = getDriverPin();
+
       document.getElementById("vehicleId").value = savedVehicle;
+      document.getElementById("lockVehicleId").value = savedVehicle;
       document.getElementById("driverName").value = savedDriver;
       document.getElementById("activeBadge").textContent = savedVehicle;
       applyLanguage();
+
+      if (savedVehicle && savedPin) {
+        document.getElementById("driverLockModal").style.display = "none";
+      }
     };
 
     function saveProfile() {
@@ -288,12 +421,22 @@
     }
 
     async function postPayload(payload) {
+      const pin = getDriverPin();
+      const vId = document.getElementById("vehicleId").value;
+      if (!pin) {
+        lockDriverApp();
+        return false;
+      }
       try {
         await fetch(SCRIPT_URL, {
           method: "POST",
           mode: "no-cors",
           headers: { "Content-Type": "text/plain" },
-          body: JSON.stringify(payload)
+          body: JSON.stringify({
+            ...payload,
+            vehicleId: payload.vehicleId || payload.vehicle_id || vId,
+            pin: pin
+          })
         });
         return true;
       } catch (err) {
