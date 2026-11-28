@@ -1,405 +1,192 @@
-<!DOCTYPE html>
-<html lang="en" dir="ltr">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>Fleet Driver Portal</title>
-
-  <!-- Installable Mobile Web App (PWA) Tags -->
-  <meta name="application-name" content="Fleet Driver" />
-  <meta name="apple-mobile-web-app-title" content="Fleet Driver" />
-  <meta name="mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <meta name="theme-color" content="#0f172a" />
-  <link rel="icon" type="image/png" href="https://gseyf579-source.github.io/fleet-driver-app/20261120_100413_0000.png" />
-  <link rel="apple-touch-icon" href="https://gseyf579-source.github.io/fleet-driver-app/20261120_100413_0000.png" />
- <link rel="manifest" href="driver-manifest.json" />
-
-  <style>
-    :root {
-      --bg: #0f172a;
-      --card: #1e293b;
-      --border: #334155;
-      --text: #f8fafc;
-      --muted: #94a3b8;
-      --primary: #2563eb;
-      --green: #16a34a;
-      --amber: #d97706;
-      --red: #dc2626;
-      --purple: #7c3aed;
-      --slate: #475569;
-    }
-    * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Tahoma, Roboto, sans-serif; }
-    body { margin: 0; background: var(--bg); color: var(--text); padding: 14px; max-width: 480px; margin-inline: auto; }
-    h1 { font-size: 1.2rem; margin: 0 0 12px; display: flex; justify-content: space-between; align-items: center; gap: 8px; }
-    .header-actions { display: flex; align-items: center; gap: 8px; }
-    .badge { font-size: 0.75rem; background: #0284c7; padding: 5px 10px; border-radius: 999px; font-weight: 700; }
-    .lang-btn {
-      width: auto; padding: 5px 10px; font-size: 0.78rem; background: var(--card);
-      border: 1px solid var(--border); border-radius: 999px; color: var(--text); cursor: pointer;
-    }
-    .card { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 14px; margin-bottom: 14px; }
-    .card-title { font-size: 0.88rem; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 10px; }
-    .row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-    label { display: block; font-size: 0.8rem; color: var(--muted); margin-bottom: 4px; }
-    input, select {
-      width: 100%; padding: 11px; border-radius: 10px; border: 1px solid var(--border);
-      background: #0f172a; color: var(--text); font-size: 1rem; margin-bottom: 10px;
-    }
-    button.action-btn {
-      width: 100%; padding: 13px; border: none; border-radius: 10px; font-size: 0.95rem;
-      font-weight: 700; color: #fff; cursor: pointer; transition: opacity 0.15s;
-    }
-    button:active { opacity: 0.8; }
-    button:disabled { opacity: 0.5; cursor: not-allowed; }
-    .btn-primary { background: var(--primary); }
-    .btn-green { background: var(--green); }
-    .btn-amber { background: var(--amber); }
-    .btn-red { background: var(--red); }
-    .btn-purple { background: var(--purple); }
-    .btn-slate { background: var(--slate); }
-    .status-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 6px; }
-    .status-grid button { padding: 12px 8px; font-size: 0.85rem; }
-    #toast {
-      position: fixed; bottom: 18px; left: 50%; transform: translateX(-50%);
-      background: #16a34a; color: #fff; padding: 10px 18px; border-radius: 999px;
-      font-weight: 600; font-size: 0.9rem; display: none; box-shadow: 0 8px 20px rgba(0,0,0,0.4); z-index: 99;
-      white-space: nowrap;
-    }
-    .gps-info { font-size: 0.8rem; color: var(--muted); margin-top: 8px; text-align: center; }
-  </style>
-</head>
-<body>
-
-  <h1>
-    <span id="appTitle">Driver Console</span>
-    <div class="header-actions">
-      <button class="lang-btn" id="langBtn" onclick="toggleLang()">عربي</button>
-      <span class="badge" id="activeBadge">TRK-01</span>
-    </div>
-  </h1>
-
-  <!-- 1. Driver & Vehicle Setup -->
-  <div class="card">
-    <div class="card-title" id="sec1Title">1. Vehicle & Driver</div>
-    <div class="row">
-      <div>
-        <label for="vehicleId" id="lblVehicle">Vehicle ID</label>
-        <select id="vehicleId" onchange="saveProfile()">
-          <option value="TRK-01">TRK-01</option>
-          <option value="TRK-02">TRK-02</option>
-          <option value="TRK-03">TRK-03</option>
-          <option value="TRK-04">TRK-04</option>
-          <option value="TRK-05">TRK-05</option>
-        </select>
+<!-- Paste right after <body> in manager.html (set APP_MODE = "manager") or index.html (set APP_MODE = "driver") -->
+<div id="fleetPinModal" style="position:fixed;inset:0;background:#0f172a;z-index:99999;display:flex;align-items:center;justify-content:center;padding:18px;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;">
+  <div id="fleetPinCard" style="background:#1e293b;border:1px solid #334155;border-radius:16px;padding:24px;width:100%;max-width:370px;color:#f8fafc;box-shadow:0 20px 40px rgba(0,0,0,0.45);">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+      <div style="display:flex;align-items:center;gap:10px;">
+        <img src="https://gseyf579-source.github.io/fleet-driver-app/20261120_100413_0000.png" alt="Truck Icon" style="width:42px;height:42px;border-radius:10px;object-fit:cover;">
+        <strong id="pinBrandTitle" style="font-size:16px;">Fleet System</strong>
       </div>
-      <div>
-        <label for="driverName" id="lblDriver">Driver Name</label>
-        <input type="text" id="driverName" placeholder="e.g. Ahmed Ali" oninput="saveProfile()" />
-      </div>
+      <button type="button" id="pinLangBtn" onclick="togglePinLang()" style="padding:6px 10px;border-radius:8px;border:1px solid #475569;background:#0f172a;color:#e2e8f0;font-size:12px;cursor:pointer;">
+        العربية
+      </button>
     </div>
-  </div>
 
-  <!-- 2. Live GPS Check-In -->
-  <div class="card">
-    <div class="card-title" id="sec2Title">2. Live GPS Location</div>
-    <button class="action-btn btn-primary" id="gpsBtn" onclick="sendGPS()">Send Live GPS Now</button>
-    <div class="gps-info" id="gpsStatus">Tap above to send current coordinates & speed</div>
-  </div>
+    <h2 id="pinHeading" style="margin:4px 0 6px;font-size:20px;">Security Lock</h2>
+    <p id="pinSubtext" style="margin:0 0 16px;color:#94a3b8;font-size:13px;">Enter your credentials to continue</p>
 
-  <!-- 3. Activity & Rest Status -->
-  <div class="card">
-    <div class="card-title" id="sec3Title">3. Activity / Rest Status</div>
-    <input type="text" id="activityNotes" placeholder="Optional note (e.g. Mandatory break, Port gate)..." />
-    <div class="status-grid">
-      <button class="action-btn btn-green" id="btnDriving" onclick="sendActivity('Driving')">Driving</button>
-      <button class="action-btn btn-amber" id="btnResting" onclick="sendActivity('Resting')">Resting</button>
-      <button class="action-btn btn-primary" id="btnLoading" onclick="sendActivity('Loading / Unloading')">Loading / Unloading</button>
-      <button class="action-btn btn-purple" id="btnRefueling" onclick="sendActivity('Refueling')">Refueling</button>
-      <button class="action-btn btn-red" id="btnMaint" onclick="sendActivity('Maintenance / Breakdown')">Maintenance</button>
-      <button class="action-btn btn-slate" id="btnOff" onclick="sendActivity('Off Duty')">Off Duty</button>
+    <div id="driverIdGroup" style="display:none;margin-bottom:12px;">
+      <label id="driverIdLabel" for="pinVehicleId" style="display:block;font-size:13px;color:#cbd5e1;margin-bottom:6px;">Vehicle ID</label>
+      <input id="pinVehicleId" type="text" placeholder="TRK-01" style="width:100%;box-sizing:border-box;padding:12px;border-radius:10px;border:1px solid #475569;background:#0f172a;color:#fff;font-size:15px;text-transform:uppercase;">
     </div>
-  </div>
 
-  <!-- 4. Fuel Refill Log -->
-  <div class="card">
-    <div class="card-title" id="sec4Title">4. Log Fuel Refill</div>
-    <div class="row">
-      <div>
-        <label for="odometer" id="lblOdo">Odometer (KM)</label>
-        <input type="number" id="odometer" placeholder="145650" inputmode="numeric" />
-      </div>
-      <div>
-        <label for="liters" id="lblLiters">Liters Added</label>
-        <input type="number" id="liters" placeholder="85" step="0.1" inputmode="decimal" />
-      </div>
+    <div style="margin-bottom:16px;">
+      <label id="pinCodeLabel" for="pinCodeInput" style="display:block;font-size:13px;color:#cbd5e1;margin-bottom:6px;">PIN Code</label>
+      <input id="pinCodeInput" type="password" inputmode="numeric" maxlength="10" placeholder="••••" style="width:100%;box-sizing:border-box;padding:12px;border-radius:10px;border:1px solid #475569;background:#0f172a;color:#fff;font-size:20px;letter-spacing:5px;text-align:center;">
     </div>
-    <label for="costIqd" id="lblCost">Total Cost (IQD)</label>
-    <input type="number" id="costIqd" placeholder="63750" inputmode="numeric" />
-    <button class="action-btn btn-green" id="fuelBtn" onclick="sendFuel()">Submit Fuel Log</button>
+
+    <button type="button" id="pinSubmitBtn" onclick="submitPinLogin()" style="width:100%;padding:13px;border:none;border-radius:10px;background:#2563eb;color:#fff;font-size:15px;font-weight:700;cursor:pointer;">
+      Unlock
+    </button>
+
+    <div id="pinMsg" style="margin-top:12px;font-size:13px;text-align:center;color:#f87171;min-height:18px;"></div>
   </div>
+</div>
 
-  <div id="toast">Sent!</div>
+<script>
+  const PIN_API_URL = "https://script.google.com/macros/s/AKfycbzBEGk_tVcQ3djSVTHisqbRwpy40kQ6acAZC9ph8Sb7NcShT78J0NuSYqG5mYubsnym_g/exec";
+  const APP_MODE = "driver"; // Change to "driver" inside index.html
 
-  <script>
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzBEGk_tVcQ3djSVTHisqbRwpy40kQ6acAZC9ph8Sb7NcShT78J0NuSYqG5mYubsnym_g/exec";
+  const PIN_I18N = {
+    en: {
+      dir: "ltr",
+      switchLabel: "العربية",
+      brandManager: "Fleet Manager",
+      brandDriver: "Driver Console",
+      headingManager: "Manager PIN Lock",
+      headingDriver: "Driver Login",
+      subManager: "Enter your Manager PIN to view fleet data",
+      subDriver: "Enter your Vehicle ID and Driver PIN",
+      idLabel: "Vehicle ID",
+      pinLabel: "PIN Code",
+      unlock: "Unlock",
+      checking: "Verifying...",
+      missingFields: "Please enter all required fields.",
+      invalidPin: "Invalid PIN or Vehicle ID.",
+      netError: "Network error. Please try again."
+    },
+    ar: {
+      dir: "rtl",
+      switchLabel: "English",
+      brandManager: "إدارة الأسطول",
+      brandDriver: "لوحة السائق",
+      headingManager: "قفل رمز المدير",
+      headingDriver: "دخول السائق",
+      subManager: "أدخل رمز PIN الخاص بالمدير لعرض بيانات الأسطول",
+      subDriver: "أدخل رمز المركبة ورمز PIN الخاص بالسائق",
+      idLabel: "رمز المركبة",
+      pinLabel: "رمز PIN",
+      unlock: "دخول",
+      checking: "جاري التحقق...",
+      missingFields: "يرجى إدخال جميع الحقول المطلوبة.",
+      invalidPin: "رمز PIN أو رمز المركبة غير صحيح.",
+      netError: "خطأ في الاتصال. حاول مرة أخرى."
+    }
+  };
 
-    const I18N = {
-      en: {
-        dir: "ltr",
-        langBtn: "عربي",
-        appTitle: "Driver Console",
-        sec1Title: "1. Vehicle & Driver",
-        lblVehicle: "Vehicle ID",
-        lblDriver: "Driver Name",
-        phDriver: "e.g. Ahmed Ali",
-        sec2Title: "2. Live GPS Location",
-        gpsBtn: "Send Live GPS Now",
-        gpsAcquiring: "Acquiring Satellite GPS...",
-        gpsHint: "Tap above to send current coordinates & speed",
-        gpsSent: (lat, lon, spd) => `Last sent: ${lat}, ${lon} (${spd} km/h)`,
-        toastGpsOk: "GPS Location Logged!",
-        toastGpsErr: "GPS Permission Denied or Unavailable",
-        toastNoGps: "GPS not supported on this browser",
-        sec3Title: "3. Activity / Rest Status",
-        phNotes: "Optional note (e.g. Mandatory break, Port gate)...",
-        statuses: {
-          "Driving": "Driving",
-          "Resting": "Resting",
-          "Loading / Unloading": "Loading / Unloading",
-          "Refueling": "Refueling",
-          "Maintenance / Breakdown": "Maintenance",
-          "Off Duty": "Off Duty"
-        },
-        toastStatus: (st) => `Status set to: ${st}`,
-        sec4Title: "4. Log Fuel Refill",
-        lblOdo: "Odometer (KM)",
-        lblLiters: "Liters Added",
-        lblCost: "Total Cost (IQD)",
-        fuelBtn: "Submit Fuel Log",
-        fuelSending: "Sending Fuel Log...",
-        toastFuelFill: "Please fill in Odometer, Liters, and Cost",
-        toastFuelOk: "Fuel Refill Logged!",
-        toastNetErr: "Network error: "
-      },
-      ar: {
-        dir: "rtl",
-        langBtn: "English",
-        appTitle: "واجهة السائق",
-        sec1Title: "١. المركبة والسائق",
-        lblVehicle: "رقم المركبة",
-        lblDriver: "اسم السائق",
-        phDriver: "مثال: أحمد علي",
-        sec2Title: "٢. الموقع المباشر (GPS)",
-        gpsBtn: "إرسال الموقع الحالي الآن",
-        gpsAcquiring: "جاري تحديد الموقع عبر الأقمار...",
-        gpsHint: "اضغط أعلاه لإرسال الإحداثيات والسرعة الحالية",
-        gpsSent: (lat, lon, spd) => `آخر إرسال: ${lat}, ${lon} (${spd} كم/س)`,
-        toastGpsOk: "تم تسجيل الموقع بنجاح!",
-        toastGpsErr: "تعذر الوصول إلى الموقع (GPS)",
-        toastNoGps: "المتصفح لا يدعم تحديد الموقع",
-        sec3Title: "٣. حالة النشاط والاستراحة",
-        phNotes: "ملاحظة اختيارية (مثال: استراحة إجبارية، بوابة الميناء)...",
-        statuses: {
-          "Driving": "في الطريق (قيادة)",
-          "Resting": "استراحة",
-          "Loading / Unloading": "تحميل / تفريغ",
-          "Refueling": "تعبئة وقود",
-          "Maintenance / Breakdown": "صيانة / عطل",
-          "Off Duty": "خارج الخدمة"
-        },
-        toastStatus: (st) => `تم تحديث الحالة إلى: ${st}`,
-        sec4Title: "٤. تسجيل تعبئة الوقود",
-        lblOdo: "قراءة العداد (كم)",
-        lblLiters: "الكمية (لتر)",
-        lblCost: "الكلفة الكلية (دينار)",
-        fuelBtn: "حفظ سجل الوقود",
-        fuelSending: "جاري إرسال سجل الوقود...",
-        toastFuelFill: "يرجى ملء العداد واللترات والكلفة",
-        toastFuelOk: "تم تسجيل تعبئة الوقود!",
-        toastNetErr: "خطأ في الاتصال: "
-      }
+  let pinLang = localStorage.getItem("fleet_lang") === "ar" ? "ar" : "en";
+
+  function applyPinLang() {
+    const t = PIN_I18N[pinLang];
+    const card = document.getElementById("fleetPinCard");
+    card.setAttribute("dir", t.dir);
+    document.documentElement.setAttribute("dir", t.dir);
+
+    document.getElementById("pinLangBtn").textContent = t.switchLabel;
+    document.getElementById("pinBrandTitle").textContent = APP_MODE === "driver" ? t.brandDriver : t.brandManager;
+    document.getElementById("pinHeading").textContent = APP_MODE === "driver" ? t.headingDriver : t.headingManager;
+    document.getElementById("pinSubtext").textContent = APP_MODE === "driver" ? t.subDriver : t.subManager;
+    document.getElementById("driverIdLabel").textContent = t.idLabel;
+    document.getElementById("pinCodeLabel").textContent = t.pinLabel;
+    document.getElementById("pinSubmitBtn").textContent = t.unlock;
+  }
+
+  function togglePinLang() {
+    pinLang = pinLang === "en" ? "ar" : "en";
+    localStorage.setItem("fleet_lang", pinLang);
+    applyPinLang();
+  }
+
+  function getSavedAuth() {
+    if (APP_MODE === "driver") {
+      return {
+        vehicleId: localStorage.getItem("fleet_driver_vehicle_id") || "",
+        pin: localStorage.getItem("fleet_driver_pin") || ""
+      };
+    }
+    return {
+      pin: localStorage.getItem("fleet_manager_pin") || ""
     };
+  }
 
-    let currentLang = localStorage.getItem("fleet_lang") || "en";
+  function logoutFleetSession() {
+    if (APP_MODE === "driver") {
+      localStorage.removeItem("fleet_driver_vehicle_id");
+      localStorage.removeItem("fleet_driver_pin");
+    } else {
+      localStorage.removeItem("fleet_manager_pin");
+    }
+    location.reload();
+  }
 
-    function applyLanguage() {
-      const t = I18N[currentLang];
-      document.documentElement.lang = currentLang;
-      document.documentElement.dir = t.dir;
+  async function submitPinLogin() {
+    const t = PIN_I18N[pinLang];
+    const msgEl = document.getElementById("pinMsg");
+    const btn = document.getElementById("pinSubmitBtn");
+    const pin = document.getElementById("pinCodeInput").value.trim();
+    const vehicleId = document.getElementById("pinVehicleId").value.trim().toUpperCase();
 
-      document.getElementById("langBtn").textContent = t.langBtn;
-      document.getElementById("appTitle").textContent = t.appTitle;
-      document.getElementById("sec1Title").textContent = t.sec1Title;
-      document.getElementById("lblVehicle").textContent = t.lblVehicle;
-      document.getElementById("lblDriver").textContent = t.lblDriver;
-      document.getElementById("driverName").placeholder = t.phDriver;
-
-      document.getElementById("sec2Title").textContent = t.sec2Title;
-      document.getElementById("gpsBtn").textContent = t.gpsBtn;
-      document.getElementById("gpsStatus").textContent = t.gpsHint;
-
-      document.getElementById("sec3Title").textContent = t.sec3Title;
-      document.getElementById("activityNotes").placeholder = t.phNotes;
-      document.getElementById("btnDriving").textContent = t.statuses["Driving"];
-      document.getElementById("btnResting").textContent = t.statuses["Resting"];
-      document.getElementById("btnLoading").textContent = t.statuses["Loading / Unloading"];
-      document.getElementById("btnRefueling").textContent = t.statuses["Refueling"];
-      document.getElementById("btnMaint").textContent = t.statuses["Maintenance / Breakdown"];
-      document.getElementById("btnOff").textContent = t.statuses["Off Duty"];
-
-      document.getElementById("sec4Title").textContent = t.sec4Title;
-      document.getElementById("lblOdo").textContent = t.lblOdo;
-      document.getElementById("lblLiters").textContent = t.lblLiters;
-      document.getElementById("lblCost").textContent = t.lblCost;
-      document.getElementById("fuelBtn").textContent = t.fuelBtn;
+    msgEl.textContent = "";
+    if (!pin || (APP_MODE === "driver" && !vehicleId)) {
+      msgEl.textContent = t.missingFields;
+      return;
     }
 
-    function toggleLang() {
-      currentLang = currentLang === "en" ? "ar" : "en";
-      localStorage.setItem("fleet_lang", currentLang);
-      applyLanguage();
-    }
+    btn.disabled = true;
+    btn.textContent = t.checking;
 
-    window.onload = () => {
-      const savedVehicle = localStorage.getItem("fleet_vehicle") || "TRK-01";
-      const savedDriver = localStorage.getItem("fleet_driver") || "";
-      document.getElementById("vehicleId").value = savedVehicle;
-      document.getElementById("driverName").value = savedDriver;
-      document.getElementById("activeBadge").textContent = savedVehicle;
-      applyLanguage();
-    };
+    try {
+      const bodyPayload = APP_MODE === "driver"
+        ? { action: "driver_login", vehicleId, pin }
+        : { action: "manager_login", pin };
 
-    function saveProfile() {
-      const v = document.getElementById("vehicleId").value;
-      const d = document.getElementById("driverName").value;
-      localStorage.setItem("fleet_vehicle", v);
-      localStorage.setItem("fleet_driver", d);
-      document.getElementById("activeBadge").textContent = v;
-    }
+      const resp = await fetch(PIN_API_URL, {
+        method: "POST",
+        body: JSON.stringify(bodyPayload)
+      });
+      const data = await resp.json();
 
-    function showToast(msg, isError = false) {
-      const t = document.getElementById("toast");
-      t.textContent = msg;
-      t.style.background = isError ? "#dc2626" : "#16a34a";
-      t.style.display = "block";
-      setTimeout(() => { t.style.display = "none"; }, 3000);
-    }
+      const isValid = APP_MODE === "driver"
+        ? data.status === "ok"
+        : (data.status === "ok" && data.authorized === true);
 
-    async function postPayload(payload) {
-      try {
-        await fetch(SCRIPT_URL, {
-          method: "POST",
-          mode: "no-cors",
-          headers: { "Content-Type": "text/plain" },
-          body: JSON.stringify(payload)
-        });
-        return true;
-      } catch (err) {
-        showToast(I18N[currentLang].toastNetErr + err.message, true);
-        return false;
-      }
-    }
-
-    function sendGPS() {
-      const t = I18N[currentLang];
-      const btn = document.getElementById("gpsBtn");
-      const status = document.getElementById("gpsStatus");
-      const vehicle_id = document.getElementById("vehicleId").value;
-      const driver_name = document.getElementById("driverName").value.trim() || "Unknown Driver";
-
-      if (!navigator.geolocation) {
-        showToast(t.toastNoGps, true);
-        return;
-      }
-
-      btn.disabled = true;
-      btn.textContent = t.gpsAcquiring;
-
-      navigator.geolocation.getCurrentPosition(async (pos) => {
-        const lat = Number(pos.coords.latitude.toFixed(6));
-        const lon = Number(pos.coords.longitude.toFixed(6));
-        const speedKmh = pos.coords.speed ? Math.round(pos.coords.speed * 3.6) : 0;
-
-        const ok = await postPayload({
-          action: "gps",
-          vehicle_id,
-          driver_name,
-          latitude: lat,
-          longitude: lon,
-          speed: speedKmh
-        });
-
-        btn.disabled = false;
-        btn.textContent = I18N[currentLang].gpsBtn;
-        if (ok) {
-          status.textContent = I18N[currentLang].gpsSent(lat, lon, speedKmh);
-          showToast(I18N[currentLang].toastGpsOk);
+      if (isValid) {
+        if (APP_MODE === "driver") {
+          localStorage.setItem("fleet_driver_vehicle_id", vehicleId);
+          localStorage.setItem("fleet_driver_pin", pin);
+        } else {
+          localStorage.setItem("fleet_manager_pin", pin);
         }
-      }, () => {
-        btn.disabled = false;
-        btn.textContent = I18N[currentLang].gpsBtn;
-        showToast(I18N[currentLang].toastGpsErr, true);
-      }, { enableHighAccuracy: true, timeout: 10000 });
-    }
-
-    async function sendActivity(statusCode) {
-      const vehicle_id = document.getElementById("vehicleId").value;
-      const driver_name = document.getElementById("driverName").value.trim() || "Unknown Driver";
-      const notes = document.getElementById("activityNotes").value.trim();
-
-      const ok = await postPayload({
-        action: "activity",
-        vehicle_id,
-        driver_name,
-        status: statusCode,
-        notes
-      });
-
-      if (ok) {
-        document.getElementById("activityNotes").value = "";
-        const displayLabel = I18N[currentLang].statuses[statusCode] || statusCode;
-        showToast(I18N[currentLang].toastStatus(displayLabel));
+        document.getElementById("fleetPinModal").style.display = "none";
+        if (typeof onFleetUnlocked === "function") {
+          onFleetUnlocked(getSavedAuth());
+        }
+      } else {
+        msgEl.textContent = t.invalidPin;
       }
-    }
-
-    async function sendFuel() {
-      const t = I18N[currentLang];
-      const vehicle_id = document.getElementById("vehicleId").value;
-      const driver_name = document.getElementById("driverName").value.trim() || "Unknown Driver";
-      const odometer = Number(document.getElementById("odometer").value);
-      const liters = Number(document.getElementById("liters").value);
-      const cost_iqd = Number(document.getElementById("costIqd").value);
-
-      if (!odometer || !liters || !cost_iqd) {
-        showToast(t.toastFuelFill, true);
-        return;
-      }
-
-      const btn = document.getElementById("fuelBtn");
-      btn.disabled = true;
-      btn.textContent = t.fuelSending;
-
-      const ok = await postPayload({
-        action: "fuel",
-        vehicle_id,
-        driver_name,
-        odometer,
-        liters,
-        cost_iqd
-      });
-
+    } catch (err) {
+      msgEl.textContent = t.netError;
+    } finally {
       btn.disabled = false;
-      btn.textContent = I18N[currentLang].fuelBtn;
+      btn.textContent = t.unlock;
+    }
+  }
 
-      if (ok) {
-        document.getElementById("odometer").value = "";
-        document.getElementById("liters").value = "";
-        document.getElementById("costIqd").value = "";
-        showToast(I18N[currentLang].toastFuelOk);
+  window.addEventListener("DOMContentLoaded", () => {
+    if (APP_MODE === "driver") {
+      document.getElementById("driverIdGroup").style.display = "block";
+    }
+    applyPinLang();
+
+    const saved = getSavedAuth();
+    const alreadyLoggedIn = APP_MODE === "driver"
+      ? Boolean(saved.vehicleId && saved.pin)
+      : Boolean(saved.pin);
+
+    if (alreadyLoggedIn) {
+      document.getElementById("fleetPinModal").style.display = "none";
+      if (typeof onFleetUnlocked === "function") {
+        onFleetUnlocked(saved);
       }
     }
-  </script>
-</body>
-</html>
+  });
+</script>
